@@ -53,6 +53,7 @@ struct proc {
   int etime;                   // End time
   int rtime;                   // Runtime
   int enteredtime;             // When did it last start running?
+  int ran;
   struct proc_stat *procstat;
 };
 

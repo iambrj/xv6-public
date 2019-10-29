@@ -6,6 +6,9 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include <stddef.h>
+
+#define FCFS
 
 struct {
   struct spinlock lock;
@@ -115,6 +118,8 @@ found:
   p->ctime = ticks;
   p->rtime = 0;
   p->etime = -1;
+
+  p->ran = 0;
 
   return p;
 }
@@ -381,6 +386,8 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+#ifdef RR
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;
@@ -400,6 +407,34 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
+#endif
+
+#ifdef FCFS
+	struct proc *min = NULL;
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+		if(p->state == RUNNABLE)
+		{
+			if(!min)
+				min = p;
+			else if(min->ctime > p->ctime)
+				min = p;
+		}
+	}
+	if(min) {
+		c->proc = min;
+		switchuvm(min);
+		min->state = RUNNING;
+		min->enteredtime = ticks;
+		if(!min->ran)
+		{
+			min->ran = 1;
+			cprintf("Scheduling process with ctime = %d\n", min->ctime);
+		}
+		swtch(&(c->scheduler), min->context);
+		switchkvm();
+		c->proc = 0;
+	}
+#endif
     release(&ptable.lock);
 
   }
