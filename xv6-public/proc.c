@@ -8,7 +8,14 @@
 #include "spinlock.h"
 #include <stddef.h>
 
-#define FCFS
+#define PS
+static unsigned long X = 1;
+
+int random_g(int M) {
+  unsigned long a = 1103515245, c = 12345;
+  X = a * X + c; 
+  return ((unsigned int)(X / 65536) % 32768) % M + 1;
+}
 
 struct {
   struct spinlock lock;
@@ -120,6 +127,10 @@ found:
   p->etime = -1;
 
   p->ran = 0;
+  if(p->pid <= 2)
+	  p->priority = -1;
+  else
+	  p->priority = random_g(ticks) % 101;
 
   return p;
 }
@@ -435,6 +446,35 @@ scheduler(void)
 		c->proc = 0;
 	}
 #endif
+
+#ifdef PS
+	struct proc *min = NULL;
+
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+		if(p->state == RUNNABLE)
+		{
+			if(p->pid > 2)
+				cprintf("Process[%d] with priority = %d in RUNNABLE state\n", p->pid, p->priority);
+			if(min == NULL)
+				min = p;
+			else if(min->priority > p->priority)
+				min = p;
+		}
+	}
+
+	if(min) {
+		c->proc = min;
+		switchuvm(min);
+		min->state = RUNNING;
+		min->enteredtime = ticks;
+		if(min->pid > 2)
+			cprintf("SCHEDULING process[%d] with priority = %d on cpu = %d\n", min->pid, min->priority, c->apicid);
+		swtch(&(c->scheduler), min->context);
+		switchkvm();
+		c->proc = 0;
+	}
+#endif
+
     release(&ptable.lock);
 
   }

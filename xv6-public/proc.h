@@ -55,6 +55,7 @@ struct proc {
   int enteredtime;             // When did it last start running?
   int ran;
   struct proc_stat *procstat;
+  int priority;
 };
 
 // Process memory is laid out contiguously, low addresses first:

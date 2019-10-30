@@ -6,31 +6,33 @@ int main(void)
 {
 	if(fork() == 0)
 	{
+		//child
+		for(int i = 0; i < 10; i++)
+		{
+			printf(5, "1 - %d\n", i);
+		}
+		exit();
+	}
+	else
+	{
 		if(fork() == 0)
 		{
-			for(int i = 0; i < 100; i++)
+			//child
+			for(int i = 0; i < 10; i++)
 			{
-				printf(10, "%d\n", i);
+				printf(5, "2 - %d\n", i);
 			}
 			exit();
 		}
 		else
 		{
-			wait();
-			for(int i = 0; i < 100; i++)
+			for(int i = 0; i < 10; i++)
 			{
-				printf(10, "%d\n", i);
+				printf(5, "2 - %d\n", i);
 			}
+			wait();
+			wait();
 			exit();
 		}
-	}
-	else
-	{
-		wait();
-		for(int i = 0; i < 100; i++)
-		{
-			printf(10, "%d\n", i);
-		}
-		exit();
 	}
 }
