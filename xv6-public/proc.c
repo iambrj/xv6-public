@@ -432,6 +432,14 @@ scheduler(void)
 		}
 	}
 	if(min) {
+
+		//check if current cpu ctime is lower than min's ctime
+		if(c->proc)
+		{
+			if(c->proc->ctime < min->ctime)
+				continue;
+		}
+
 		c->proc = min;
 		switchuvm(min);
 		min->state = RUNNING;
@@ -463,6 +471,14 @@ scheduler(void)
 	}
 
 	if(min) {
+
+		//check if current cpu process is lower than min
+		if(c->proc)
+		{
+			if(c->proc->priority < min->priority)
+				continue;
+		}
+
 		c->proc = min;
 		switchuvm(min);
 		min->state = RUNNING;
