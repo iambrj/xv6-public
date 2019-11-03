@@ -128,11 +128,27 @@ found:
 
   p->ran = 0;
   if(p->pid <= 2)
-	  p->priority = -1;
+	  p->priority = 101;
   else
-	  p->priority = random_g(ticks) % 101;
+	  p->priority = random_g(ticks);
 
   return p;
+}
+
+int
+shouldIgiveUp(int priority)
+{
+	acquire(&ptable.lock);
+	for(struct proc *p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+	{
+		if(p->priority < priority && myproc()->pid != p->pid)
+		{
+			release(&ptable.lock);
+			return 1;
+		}
+	}
+	release(&ptable.lock);
+	return 0;
 }
 
 //PAGEBREAK: 32
@@ -376,6 +392,21 @@ waitx(int *wtime, int *rtime)
   }
 }
 
+int
+set_priority(int new_priority)
+{
+	cli();	
+
+	acquire(&ptable.lock);
+	struct proc * contender_process = myproc();
+	int old_priority = contender_process->priority;
+	contender_process->priority = new_priority;
+	release(&ptable.lock);
+
+	sti();
+
+	return old_priority;
+}
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -444,12 +475,12 @@ scheduler(void)
 		switchuvm(min);
 		min->state = RUNNING;
 		min->enteredtime = ticks;
+		swtch(&(c->scheduler), min->context);
 		if(!min->ran)
 		{
 			min->ran = 1;
-			cprintf("Scheduling process with ctime = %d\n", min->ctime);
+			cprintf("Scheduling process with ctime = %d pname = %s pid = %d\n", min->ctime, min->name, min->pid);
 		}
-		swtch(&(c->scheduler), min->context);
 		switchkvm();
 		c->proc = 0;
 	}
@@ -473,11 +504,6 @@ scheduler(void)
 	if(min) {
 
 		//check if current cpu process is lower than min
-		if(c->proc)
-		{
-			if(c->proc->priority < min->priority)
-				continue;
-		}
 
 		c->proc = min;
 		switchuvm(min);

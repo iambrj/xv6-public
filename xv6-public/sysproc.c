@@ -103,3 +103,12 @@ sys_waitx(void)
 
 	return status;
 }
+int 
+sys_set_priority(void)
+{
+	int new_priority;
+	argint(0, &new_priority);
+	
+	int status = set_priority(new_priority);
+	return status;
+}
