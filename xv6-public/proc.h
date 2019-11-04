@@ -52,10 +52,12 @@ struct proc {
   int ctime;                   // Creation time
   int etime;                   // End time
   int rtime;                   // Runtime
-  int enteredtime;             // When did it last start running?
+  int enteredtime, exit_time;  // When did it last start running?
   int ran;
   struct proc_stat *procstat;
   int priority;
+  int qno, qpos;
+  int localrtime;
 };
 
 // Process memory is laid out contiguously, low addresses first:
