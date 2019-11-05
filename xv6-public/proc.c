@@ -8,7 +8,7 @@
 #include "spinlock.h"
 #include <stddef.h>
 
-#define PS
+#define FCFS
 static unsigned long X = 1;
 
 int random_g(int M) {
