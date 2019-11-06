@@ -39,6 +39,7 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+  cprintf("inside pinit\n");
 }
 
 // Must be called with interrupts disabled
@@ -88,24 +89,18 @@ myproc(void) {
 static struct proc*
 allocproc(void)
 {
-  for(int i = 0; i < QUEUE_COUNT; i++)
-  {
-	proc_count[i] = 0;
-	time_slice[i] = 1;
-	for(int j = 0; j < i; j++)
-		time_slice[i] *= 2;
-	queue_limit[i] = 10 * (QUEUE_COUNT - i);
-  }
+
   struct proc *p;
   char *sp;
 
   acquire(&ptable.lock);
-
+  cprintf("acquire 1 in allocproc\n");
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
       goto found;
 
   release(&ptable.lock);
+  cprintf("release 1 in allocproc\n");
   return 0;
 
 found:
@@ -113,6 +108,7 @@ found:
   p->pid = nextpid++;
 
   release(&ptable.lock);
+  cprintf("release after found goto\n");
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -140,12 +136,15 @@ found:
   p->etime = -1;
 
   p->qno = 0;
+  p->qpos = proc_count[0]++;
 
+#ifdef PS
   p->ran = 0;
   if(p->pid <= 2)
 	  p->priority = 101;
   else
 	  p->priority = random_g(ticks);
+#endif
 
   return p;
 }
@@ -198,10 +197,12 @@ userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
+  cprintf("lock acquired to make init state runnable\n");
 
   p->state = RUNNABLE;
 
   release(&ptable.lock);
+  cprintf("lock released to make init state runnable\n");
 }
 
 // Grow current process's memory by n bytes.
@@ -264,14 +265,11 @@ fork(void)
   pid = np->pid;
 
   acquire(&ptable.lock);
-
+  cprintf("lock acquired in fork\n");
   np->state = RUNNABLE;
-  np->qno = 0;
-  proc_count[0]++;
-  np->qpos = proc_count[0];
 
   release(&ptable.lock);
-
+  cprintf("lock acquired to main fork\n");
   return pid;
 }
 
@@ -332,6 +330,7 @@ wait(void)
   struct proc *curproc = myproc();
   
   acquire(&ptable.lock);
+  cprintf("acquired in wait\n");
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
@@ -350,7 +349,9 @@ wait(void)
         p->name[0] = 0;
         p->killed = 0;
         p->state = UNUSED;
+        
         release(&ptable.lock);
+        cprintf("releaseed in wait\n");
         return pid;
       }
     }
@@ -358,6 +359,8 @@ wait(void)
     // No point waiting if we don't have any children.
     if(!havekids || curproc->killed){
       release(&ptable.lock);
+        cprintf("released in wait\n");
+
       return -1;
     }
 
@@ -548,15 +551,22 @@ scheduler(void)
 		if(p->qno == queueToBeScheduled && p->state == RUNNABLE)
 		{
 			p->qpos--;
-			if(!p->qno)
+			if(!p->qpos)
 			{
 				procToBeScheduled = p;
 			}
 		}
 	}
-
+  cprintf("hello procTobeScheduled %d\n",procToBeScheduled->pid);
 	if(procToBeScheduled) {
 
+		cprintf("%d\n", procToBeScheduled->pid);
+
+		if(procToBeScheduled->pid == 1)
+		{
+			procToBeScheduled->qno = 50;
+			proc_count[0]--;
+		}
 		//check if current cpu process is lower than min
 
 		c->proc = procToBeScheduled;
@@ -608,7 +618,7 @@ void
 yield(void)
 {
   acquire(&ptable.lock);  //DOC: yieldlock
-
+  
 #ifdef MLQ
   myproc()->rtime += ticks - myproc()->enteredtime;
   myproc()->localrtime += ticks - myproc()->enteredtime;
