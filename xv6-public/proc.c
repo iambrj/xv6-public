@@ -135,7 +135,7 @@ found:
   if(p->pid <= 2)
 	  p->priority = 101;
   else
-	  p->priority = random_g(ticks);
+	  p->priority = random_g(ticks) % 101;
 #endif
 
   return p;
@@ -496,11 +496,7 @@ scheduler(void)
 		min->state = RUNNING;
 		min->enteredtime = ticks;
 		swtch(&(c->scheduler), min->context);
-		if(!min->ran)
-		{
-			min->ran = 1;
-			cprintf("Scheduling process with ctime = %d pname = %s pid = %d\n", min->ctime, min->name, min->pid);
-		}
+		cprintf("[SCHEDULER] pid [%d] ctime [%d]\n", min->pid, min->ctime);
 		switchkvm();
 		c->proc = 0;
 	}
@@ -508,10 +504,17 @@ scheduler(void)
 
 #ifdef PS
 	struct proc *min = NULL;
-
-	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-	{
-
+    
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+		if(p->state == RUNNABLE)
+		{
+			if(p->pid > 2)
+				cprintf("[RUNNABLE] pid [%d]\n", p->pid);
+			if(min == NULL)
+				min = p;
+			else if(min->priority > p->priority)
+				min = p;
+		}
 	}
 
 	if(min) {
@@ -523,7 +526,7 @@ scheduler(void)
 		min->state = RUNNING;
 		min->enteredtime = ticks;
 		if(min->pid > 2)
-			cprintf("[SCHEDULER] process[%d] with priority = %d on cpu = %d\n", min->pid, min->priority, c->apicid);
+		cprintf("[SCHEDULER] pid [%d] priority [%d] cpu [%d]\n", min->pid, min->priority, c->apicid);
 		swtch(&(c->scheduler), min->context);
 		switchkvm();
 		c->proc = 0;
@@ -621,6 +624,7 @@ sched(void)
 void
 yield(void)
 {
+#ifndef FCFS
   acquire(&ptable.lock);  //DOC: yieldlock
   
 #ifdef MLQ
@@ -654,6 +658,7 @@ yield(void)
 #endif
 
   release(&ptable.lock);
+#endif
 }
 
 // A fork child's very first scheduling by scheduler()

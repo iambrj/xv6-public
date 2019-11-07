@@ -25,10 +25,11 @@ int main(void)
 		}
 	}
 	int wait_time,run_time;
-	for(i=0;i<FORKS;i++)
+
+	for(i = 0; i < FORKS; i++)
 	{
 		int pid = waitx(&wait_time,&run_time);
-		printf(1,"wait time of %d is %d and run time is %d\n",pid,wait_time,run_time);
+		printf(1, "[WAITX] pid[%d] wait time[%d] run time [%d]\n",pid,wait_time,run_time);
 	}
 	exit();
 }
