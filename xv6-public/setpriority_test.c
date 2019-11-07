@@ -2,8 +2,8 @@
 #include "stat.h"
 #include "user.h"
 
-#define FORKS 2
-#define TIMES 10000
+#define FORKS 10
+#define TIMES 25000
 // Parent forks two children, waits for them to exit and then finally exits
 
 static unsigned long X = 1;
@@ -24,7 +24,7 @@ int main(void)
 			set_priority(rand_generator(uptime()) % 101);
 			for(j = 0; j < TIMES; j++)
 			{
-				j++; j--;
+				printf(10, "%d", j);
 			}
 			exit();
 		}

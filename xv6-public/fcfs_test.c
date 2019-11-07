@@ -2,8 +2,8 @@
 #include "stat.h"
 #include "user.h"
 
-#define FORKS 2
-#define TIMES 10000
+#define FORKS 10
+#define TIMES 25000
 
 int main(void)
 {

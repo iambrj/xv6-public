@@ -18,17 +18,13 @@ struct proc_stat {
 int main(void)
 {
 	int i,j;
-	int myVar = 1;
 	for(i=0;i<FORKS;i++)
 	{
 		if(fork() == 0)
 		{
 			for(j=0;j<TIMES;j++)
 			{
-				j++; j--;
 				printf(5,"hello\n");
-				myVar *= 2;
-				myVar /= 2;
 			}
 			struct proc_stat p;
 			getpinfo(&p);
