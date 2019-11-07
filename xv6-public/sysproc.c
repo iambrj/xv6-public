@@ -103,6 +103,20 @@ sys_waitx(void)
 
 	return status;
 }
+
+int
+sys_getpinfo(void)
+{
+	struct proc_stat *p;
+
+	argptr(0, (void *)&p, sizeof(*p));
+
+	int status = getpinfo(p);
+
+	return status;
+}
+
+
 int 
 sys_set_priority(void)
 {

@@ -1,4 +1,11 @@
+#define QUEUE_COUNT 5
+#define MLQ
 // Per-CPU state
+
+int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
+
+int updateQpos();
+
 struct cpu {
   uchar apicid;                // Local APIC ID
   struct context *scheduler;   // swtch() here to enter scheduler

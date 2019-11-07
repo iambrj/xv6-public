@@ -2,40 +2,34 @@
 #include "stat.h"
 #include "user.h"
 
+#define FORKS 2
+#define	TIMES 100000
+
+
 // Parent forks two children, waits for them to exit and then finally exits
 int main(void)
 {
-	if(fork() == 0)
-	{
-		//child
-		set_priority(50);
-		for(int i = 0; i < 10; i++)
-		{
-			printf(5, "1 - %d\n", i);
-		}
-		exit();
-	}
-	else
+	int i,j;
+	int myVar = 1;
+	for(i=0;i<FORKS;i++)
 	{
 		if(fork() == 0)
 		{
-			//child
-			set_priority(70);
-			for(int i = 0; i < 10; i++)
+			for(j=0;j<TIMES;j++)
 			{
-				printf(5, "2 - %d\n", i);
+				j++; j--;
+				printf(5,"hello\n");
+				myVar *= 2;
+				myVar /= 2;
 			}
-			exit();
-		}
-		else
-		{
-			for(int i = 0; i < 10; i++)
-			{
-				printf(5, "2 - %d\n", i);
-			}
-			wait();
-			wait();
 			exit();
 		}
 	}
+	int wait_time,run_time;
+	for(i=0;i<FORKS;i++)
+	{
+		int pid = waitx(&wait_time,&run_time);
+		printf(1,"wait time of %d is %d and run time is %d\n",pid,wait_time,run_time);
+	}
+	exit();
 }

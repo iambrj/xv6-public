@@ -8,13 +8,9 @@
 #include "spinlock.h"
 #include <stddef.h>
 
-#define QUEUE_COUNT 5
-
-#define MLQ
 
 static unsigned long X = 1;
 
-int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
 
 int random_g(int M) {
   unsigned long a = 1103515245, c = 12345;
@@ -294,6 +290,7 @@ exit(void)
 
   acquire(&ptable.lock);
 
+  cprintf("[EXIT] pid[%d] rtime[%d]\n", curproc->pid, curproc->rtime);
   // Parent might be sleeping in wait().
   wakeup1(curproc->parent);
 
@@ -401,6 +398,18 @@ waitx(int *wtime, int *rtime)
     // Wait for children to exit.  (See wakeup1 call in proc_exit.)
     sleep(curproc, &ptable.lock);  //DOC: wait-sleep
   }
+}
+
+int
+getpinfo(struct proc_stat *p)
+{
+	p->pid = myproc()->pid;
+	p->runtime = myproc()->rtime;
+	p->num_run = myproc()->procstat->num_run;
+	p->current_queue = myproc()->procstat->current_queue;
+	for(int i = 0; i < QUEUE_COUNT; i++)
+		p->ticks[i] = myproc()->procstat->ticks[i];
+	return 1;
 }
 
 int
@@ -514,7 +523,7 @@ scheduler(void)
 		min->state = RUNNING;
 		min->enteredtime = ticks;
 		if(min->pid > 2)
-			cprintf("SCHEDULING process[%d] with priority = %d on cpu = %d\n", min->pid, min->priority, c->apicid);
+			cprintf("[SCHEDULER] process[%d] with priority = %d on cpu = %d\n", min->pid, min->priority, c->apicid);
 		swtch(&(c->scheduler), min->context);
 		switchkvm();
 		c->proc = 0;
@@ -525,10 +534,16 @@ scheduler(void)
 
 	struct proc *procToBeScheduled = NULL;
 
+	int i;
 	int queueToBeScheduled = -1;
-	for(int i = 0; i < QUEUE_COUNT; i++)
+	int runnable_processes[QUEUE_COUNT] = {};
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+		if(p->state == RUNNABLE) runnable_processes[p->qno]++;
+	}
+
+	for(i = 0; i < QUEUE_COUNT; i++)
 	{
-		if(proc_count[i] > 0)
+		if(runnable_processes[i] > 0)
 		{
 			queueToBeScheduled = i;
 			break;
@@ -552,19 +567,15 @@ scheduler(void)
 		}
 	}
 	if(procToBeScheduled) {
-
-		//check if current cpu process is lower than min
-
 		c->proc = procToBeScheduled;
 		switchuvm(procToBeScheduled);
 		procToBeScheduled->state = RUNNING;
 		procToBeScheduled->enteredtime = ticks;
-		cprintf("SCHEDULING process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->priority, c->apicid);
+		cprintf("[SCHEDULER] process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->priority, c->apicid);
 		swtch(&(c->scheduler), procToBeScheduled->context);
 		switchkvm();
 		c->proc = 0;
 	}
-
 #endif
 
     release(&ptable.lock);
@@ -605,8 +616,7 @@ yield(void)
   acquire(&ptable.lock);  //DOC: yieldlock
   
 #ifdef MLQ
-  cprintf("entered yield hello \n");
-  myproc()->rtime += ticks - myproc()->enteredtime;
+  cprintf("[YIELD] pid[%d] yielded\n", myproc()->pid);
   myproc()->localrtime += ticks - myproc()->enteredtime;
 
 
@@ -616,14 +626,12 @@ yield(void)
 	  myproc()->state = RUNNABLE;
 	  if(myproc()->qno < 4)
 	  {
-		  //TODO: push to below queue and update below queue info
 		  proc_count[myproc()->qno++]--;
 		  proc_count[myproc()->qno]++;
 		  myproc()->qpos = proc_count[myproc()->qno]++;
 	  }
 	  else
 	  {
-		  //TODO append to end of 4th queue
 		  myproc()->qpos = proc_count[4];
 	  }
 	  myproc()->exit_time = ticks;
@@ -687,7 +695,9 @@ sleep(void *chan, struct spinlock *lk)
 	// Go to sleep.
 	p->chan = chan;
 	p->state = SLEEPING;
+#ifndef MLQ
 	p->rtime += ticks - p->enteredtime;
+#endif
 
 	sched();
 
@@ -774,7 +784,7 @@ procdump(void)
 			state = states[p->state];
 		else
 			state = "???";
-		cprintf("%d %s %s", p->pid, state, p->name);
+		cprintf("%d %s %s qno[%d] qpos[%d]", p->pid, state, p->name, p->qno, p->qpos);
 		if(p->state == SLEEPING){
 			getcallerpcs((uint*)p->context->ebp+2, pc);
 			for(i=0; i<10 && pc[i] != 0; i++)
@@ -782,4 +792,20 @@ procdump(void)
 		}
 		cprintf("\n");
 	}
+}
+
+int updateQpos(int qno)
+{
+	acquire(&ptable.lock);
+	struct proc *p;
+	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
+	{
+		if(p->qno == myproc()->qno)
+		{
+			p->qpos++;
+		}
+	}
+	myproc()->qpos = 0;
+	release(&ptable.lock);
+	return 0;
 }
