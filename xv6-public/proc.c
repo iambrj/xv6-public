@@ -539,6 +539,14 @@ scheduler(void)
 	int runnable_processes[QUEUE_COUNT] = {};
 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 		if(p->state == RUNNABLE) runnable_processes[p->qno]++;
+		if(ticks - p->exit_time > queue_limit[p->qno])
+		{
+			if(p->qno > 0)
+			{
+				proc_count[p->qno--]--;
+				proc_count[p->qno]++;
+			}
+		}
 	}
 
 	for(i = 0; i < QUEUE_COUNT; i++)

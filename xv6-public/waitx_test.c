@@ -3,8 +3,7 @@
 #include "user.h"
 
 #define FORKS 2
-#define	TIMES 100000
-
+#define	TIMES 10000
 
 // Parent forks two children, waits for them to exit and then finally exits
 int main(void)
