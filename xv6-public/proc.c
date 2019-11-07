@@ -133,7 +133,7 @@ found:
   for(i = 0; i < 5; i++)
 	  p->ticks[i] = 0;
 
-#ifdef PS
+#ifdef PBS
   p->ran = 0;
   if(p->pid <= 2)
 	  p->priority = 101;
@@ -165,6 +165,16 @@ shouldIgiveUp(int priority)
 void
 userinit(void)
 {
+	cprintf("Scheduling policy = ");
+#ifdef MLFQ
+	cprintf("Multilevel queue\n");
+#endif
+#ifdef RR
+	cprintf("Round robin\n");
+#endif
+#ifdef PBS
+	cprintf("Priority\n");
+#endif
   struct proc *p;
   extern char _binary_initcode_start[], _binary_initcode_size[];
 
@@ -505,7 +515,7 @@ scheduler(void)
 	}
 #endif
 
-#ifdef PS
+#ifdef PBS
 	struct proc *min = NULL;
     
 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
@@ -536,7 +546,7 @@ scheduler(void)
 	}
 #endif
 
-#ifdef MLQ
+#ifdef MLFQ
 
 	struct proc *procToBeScheduled = NULL;
 
@@ -631,7 +641,7 @@ yield(void)
 #ifndef FCFS
   acquire(&ptable.lock);  //DOC: yieldlock
   
-#ifdef MLQ
+#ifdef MLFQ
   cprintf("[YIELD] pid[%d] yielded\n", myproc()->pid);
   myproc()->localrtime += ticks - myproc()->enteredtime;
 
@@ -655,7 +665,7 @@ yield(void)
   }
 #endif
 
-#ifndef MLQ
+#ifndef MLFQ
   myproc()->state = RUNNABLE;
   myproc()->rtime += ticks - myproc()->enteredtime;
   sched();
@@ -712,7 +722,7 @@ sleep(void *chan, struct spinlock *lk)
 	// Go to sleep.
 	p->chan = chan;
 	p->state = SLEEPING;
-#ifndef MLQ
+#ifndef MLFQ
 	p->rtime += ticks - p->enteredtime;
 #endif
 

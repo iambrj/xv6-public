@@ -1,5 +1,4 @@
 #define QUEUE_COUNT 5
-#define MLQ
 // Per-CPU state
 struct proc_stat { 
 	int pid;   // PID of each process  
@@ -8,7 +7,6 @@ struct proc_stat {
 	int current_queue; // current assigned queue 
 	int ticks[5]; // number of ticks each process has received at each of the 5  priority 
 };
-
 
 int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
 
