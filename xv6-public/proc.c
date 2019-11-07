@@ -476,11 +476,7 @@ scheduler(void)
 		min->state = RUNNING;
 		min->enteredtime = ticks;
 		swtch(&(c->scheduler), min->context);
-		if(!min->ran)
-		{
-			min->ran = 1;
-			cprintf("Scheduling process with ctime = %d pname = %s pid = %d\n", min->ctime, min->name, min->pid);
-		}
+		cprintf("[SCHEDULER] pid [%d] ctime [%d]\n", min->pid, min->ctime);
 		switchkvm();
 		c->proc = 0;
 	}
@@ -493,7 +489,7 @@ scheduler(void)
 		if(p->state == RUNNABLE)
 		{
 			if(p->pid > 2)
-				cprintf("Process[%d] with priority = %d in RUNNABLE state\n", p->pid, p->priority);
+				cprintf("[RUNNABLE] pid [%d]\n", p->pid);
 			if(min == NULL)
 				min = p;
 			else if(min->priority > p->priority)
@@ -510,7 +506,7 @@ scheduler(void)
 		min->state = RUNNING;
 		min->enteredtime = ticks;
 		if(min->pid > 2)
-			cprintf("SCHEDULING process[%d] with priority = %d on cpu = %d\n", min->pid, min->priority, c->apicid);
+			cprintf("[SCHEDULER] pid [%d] priority [%d] cpu [%d]\n", min->pid, min->priority, c->apicid);
 		swtch(&(c->scheduler), min->context);
 		switchkvm();
 		c->proc = 0;
@@ -552,11 +548,13 @@ sched(void)
 void
 yield(void)
 {
+#ifndef FCFS
   acquire(&ptable.lock);  //DOC: yieldlock
   myproc()->state = RUNNABLE;
   myproc()->rtime += ticks - myproc()->enteredtime;
   sched();
   release(&ptable.lock);
+#endif
 }
 
 // A fork child's very first scheduling by scheduler()
