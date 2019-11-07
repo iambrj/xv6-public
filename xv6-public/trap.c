@@ -113,14 +113,27 @@ trap(struct trapframe *tf)
   }
 #endif
 
-#ifndef FCFS
-#ifndef PS
+#ifdef RR
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
   {
     yield();
   }
 #endif
+
+#ifdef MLQ
+  if(myproc() && myproc()->state == RUNNING &&
+		  tf->trapno = T_IRQ0 + IRQ_TIMER)
+  {
+	  if(myproc()->rtime >= time_slice[myproc()->qno])
+	  {
+		  yield();
+	  }
+	  else
+	  {
+		  // update qpos of all processes and push to head without yield
+	  }
+  }
 #endif
 
   // Check if the process has been killed since we yielded

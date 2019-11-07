@@ -39,7 +39,6 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
-  cprintf("inside pinit\n");
 }
 
 // Must be called with interrupts disabled
@@ -94,13 +93,11 @@ allocproc(void)
   char *sp;
 
   acquire(&ptable.lock);
-  cprintf("acquire 1 in allocproc\n");
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == UNUSED)
       goto found;
 
   release(&ptable.lock);
-  cprintf("release 1 in allocproc\n");
   return 0;
 
 found:
@@ -108,7 +105,6 @@ found:
   p->pid = nextpid++;
 
   release(&ptable.lock);
-  cprintf("release after found goto\n");
 
   // Allocate kernel stack.
   if((p->kstack = kalloc()) == 0){
@@ -197,12 +193,10 @@ userinit(void)
   // writes to be visible, and the lock is also needed
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
-  cprintf("lock acquired to make init state runnable\n");
 
   p->state = RUNNABLE;
 
   release(&ptable.lock);
-  cprintf("lock released to make init state runnable\n");
 }
 
 // Grow current process's memory by n bytes.
@@ -351,7 +345,6 @@ wait(void)
         p->state = UNUSED;
         
         release(&ptable.lock);
-        cprintf("releaseed in wait\n");
         return pid;
       }
     }
@@ -545,36 +538,31 @@ scheduler(void)
 		}
 	}
 
-	if(queueToBeScheduled == -1) continue;
+	if(queueToBeScheduled == -1)
+	{
+		release(&ptable.lock);
+		continue;
+	}
 
 	for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
 		if(p->qno == queueToBeScheduled && p->state == RUNNABLE)
 		{
 			p->qpos--;
-			if(!p->qpos)
+			if(p->qpos < 0)
 			{
 				procToBeScheduled = p;
 			}
 		}
 	}
-  cprintf("hello procTobeScheduled %d\n",procToBeScheduled->pid);
 	if(procToBeScheduled) {
 
-		cprintf("%d\n", procToBeScheduled->pid);
-
-		if(procToBeScheduled->pid == 1)
-		{
-			procToBeScheduled->qno = 50;
-			proc_count[0]--;
-		}
 		//check if current cpu process is lower than min
 
 		c->proc = procToBeScheduled;
 		switchuvm(procToBeScheduled);
 		procToBeScheduled->state = RUNNING;
 		procToBeScheduled->enteredtime = ticks;
-		if(procToBeScheduled->pid > 2)
-			cprintf("SCHEDULING process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->priority, c->apicid);
+		cprintf("SCHEDULING process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->priority, c->apicid);
 		swtch(&(c->scheduler), procToBeScheduled->context);
 		switchkvm();
 		c->proc = 0;
@@ -620,6 +608,7 @@ yield(void)
   acquire(&ptable.lock);  //DOC: yieldlock
   
 #ifdef MLQ
+  cprintf("entered yield hello \n");
   myproc()->rtime += ticks - myproc()->enteredtime;
   myproc()->localrtime += ticks - myproc()->enteredtime;
 
@@ -631,10 +620,9 @@ yield(void)
 	  if(myproc()->qno < 4)
 	  {
 		  //TODO: push to below queue and update below queue info
-		  proc_count[myproc()->qno]--;
-		  myproc()->qno++;
+		  proc_count[myproc()->qno++]--;
 		  proc_count[myproc()->qno]++;
-		  myproc()->qpos = proc_count[myproc()->qno];
+		  myproc()->qpos = proc_count[myproc()->qno]++;
 	  }
 	  else
 	  {
@@ -647,11 +635,9 @@ yield(void)
 #endif
 
 #ifndef MLQ
-  acquire(&ptable.lock);  //DOC: yieldlock
   myproc()->state = RUNNABLE;
   myproc()->rtime += ticks - myproc()->enteredtime;
   sched();
-  release(&ptable.lock);
 #endif
 
   release(&ptable.lock);
