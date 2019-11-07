@@ -1,3 +1,7 @@
+# Details
+- Name : Bharathi Ramana Joshi
+- https://github.com/iambrj/xv6-public
+- Roll number : 2019121006
 # Report
 On the following program
 ```
@@ -35,6 +39,9 @@ FCFS takes 17.31 seconds
 PBS takes 18.14 seconds
 
 MLFQ takes 18.71 seconds
+
+RR takes 15.61 seconds
+
 # Description
 To add a new system call, the following procedure was followed
 
