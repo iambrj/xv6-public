@@ -571,7 +571,7 @@ scheduler(void)
 		switchuvm(procToBeScheduled);
 		procToBeScheduled->state = RUNNING;
 		procToBeScheduled->enteredtime = ticks;
-		cprintf("[SCHEDULER] process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->priority, c->apicid);
+		cprintf("[SCHEDULER] process[%d] on queue[%d]\n", procToBeScheduled->pid, procToBeScheduled->qno, c->apicid);
 		swtch(&(c->scheduler), procToBeScheduled->context);
 		switchkvm();
 		c->proc = 0;
