@@ -1,5 +1,5 @@
 #define QUEUE_COUNT 5
-#define MLQ
+#define FCFS
 // Per-CPU state
 
 int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
@@ -80,3 +80,4 @@ struct proc_stat {
 	int current_queue;	// Current assigned queue
 	int ticks[5];		// Number of ticks the process has received at each of the 5 priority queue
 };
+int shouldIgiveUp(int priority);

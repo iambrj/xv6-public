@@ -8,7 +8,6 @@
 #include "spinlock.h"
 #include <stddef.h>
 
-
 static unsigned long X = 1;
 
 
