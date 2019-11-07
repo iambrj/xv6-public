@@ -184,6 +184,7 @@ UPROGS=\
 	_waitx_test\
 	_fcfs_test\
 	_setpriority_test\
+	_getpinfo_test\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -252,7 +253,7 @@ qemu-nox-gdb: fs.img xv6.img .gdbinit
 
 EXTRA=\
 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
-	fcfs_test.c waitx_test.c ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
+	getpinfo_test.c fcfs_test.c waitx_test.c ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
 	printf.c umalloc.c setpriority_test.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\

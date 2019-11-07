@@ -1,6 +1,14 @@
 #define QUEUE_COUNT 5
-#define FCFS
+#define MLQ
 // Per-CPU state
+struct proc_stat { 
+	int pid;   // PID of each process  
+	float runtime;  // Use suitable unit of time 
+	int num_run; // number of time the process is executed 
+	int current_queue; // current assigned queue 
+	int ticks[5]; // number of ticks each process has received at each of the 5  priority 
+};
+
 
 int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
 
@@ -61,10 +69,11 @@ struct proc {
   int rtime;                   // Runtime
   int enteredtime, exit_time;  // When did it last start running?
   int ran;
-  struct proc_stat *procstat;
   int priority;
   int qno, qpos;
   int localrtime;
+  int ticks[5];
+  int num_run;
 };
 
 // Process memory is laid out contiguously, low addresses first:
@@ -73,11 +82,4 @@ struct proc {
 //   fixed-size stack
 //   expandable heap
 
-struct proc_stat {
-	int pid;			// PID of the process
-	float runtime;		// 1.0 sec
-	int num_run;		// Number of times the process is executed
-	int current_queue;	// Current assigned queue
-	int ticks[5];		// Number of ticks the process has received at each of the 5 priority queue
-};
 int shouldIgiveUp(int priority);

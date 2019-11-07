@@ -10,7 +10,6 @@
 
 static unsigned long X = 1;
 
-
 int random_g(int M) {
   unsigned long a = 1103515245, c = 12345;
   X = a * X + c; 
@@ -128,6 +127,11 @@ found:
 
   p->qno = 0;
   p->qpos = proc_count[0]++;
+
+  p->num_run = 0;
+  int i;
+  for(i = 0; i < 5; i++)
+	  p->ticks[i] = 0;
 
 #ifdef PS
   p->ran = 0;
@@ -404,10 +408,10 @@ getpinfo(struct proc_stat *p)
 {
 	p->pid = myproc()->pid;
 	p->runtime = myproc()->rtime;
-	p->num_run = myproc()->procstat->num_run;
-	p->current_queue = myproc()->procstat->current_queue;
+	p->num_run = myproc()->num_run;
+	p->current_queue = myproc()->qno;
 	for(int i = 0; i < QUEUE_COUNT; i++)
-		p->ticks[i] = myproc()->procstat->ticks[i];
+		p->ticks[i] = myproc()->ticks[i];
 	return 1;
 }
 
@@ -577,6 +581,7 @@ scheduler(void)
 		}
 	}
 	if(procToBeScheduled) {
+		procToBeScheduled->num_run++;
 		c->proc = procToBeScheduled;
 		switchuvm(procToBeScheduled);
 		procToBeScheduled->state = RUNNING;
