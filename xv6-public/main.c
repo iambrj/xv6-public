@@ -6,10 +6,13 @@
 #include "proc.h"
 #include "x86.h"
 
+#define QUEUE_COUNT 5
+
 static void startothers(void);
 static void mpmain(void)  __attribute__((noreturn));
 extern pde_t *kpgdir;
 extern char end[]; // first address after kernel loaded from ELF file
+extern int proc_count[5], time_slice[5], queue_limit[5];
 
 // Bootstrap processor starts running C code here.
 // Allocate a real stack and switch to it, first
@@ -17,6 +20,14 @@ extern char end[]; // first address after kernel loaded from ELF file
 int
 main(void)
 {
+  for(int i = 0; i < 5; i++)
+  {
+	proc_count[i] = 0;
+	time_slice[i] = 1;
+	for(int j = 0; j < i; j++)
+		time_slice[i] *= 2;
+	queue_limit[i] = 10 * (QUEUE_COUNT - i);
+  }
   kinit1(end, P2V(4*1024*1024)); // phys page allocator
   kvmalloc();      // kernel page table
   mpinit();        // detect other processors

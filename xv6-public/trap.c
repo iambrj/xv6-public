@@ -8,6 +8,7 @@
 #include "traps.h"
 #include "spinlock.h"
 
+#define MLQ
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
 extern uint vectors[];  // in vectors.S: array of 256 entry pointers
@@ -113,14 +114,34 @@ trap(struct trapframe *tf)
   }
 #endif
 
-#ifndef FCFS
-#ifndef PS
+#ifdef RR
   if(myproc() && myproc()->state == RUNNING &&
      tf->trapno == T_IRQ0+IRQ_TIMER)
   {
     yield();
   }
 #endif
+
+#ifdef MLQ
+  if(myproc() && myproc()->state == RUNNING &&
+     tf->trapno == T_IRQ0+IRQ_TIMER)
+  {
+	  myproc()->rtime++;
+	  myproc()->localrtime++;
+  }
+  if(myproc() && myproc()->state == RUNNING &&
+		  tf->trapno == T_IRQ0 + IRQ_TIMER && myproc()->pid > 2)
+  {
+	  if(myproc()->localrtime >= time_slice[myproc()->qno])
+	  {
+		  yield();
+	  }
+	  else
+	  {
+		  // update qpos of all processes and push to head without yield
+		  updateQpos();
+	  }
+  }
 #endif
 
   // Check if the process has been killed since we yielded

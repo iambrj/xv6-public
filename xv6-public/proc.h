@@ -1,4 +1,11 @@
+#define QUEUE_COUNT 5
+#define MLQ
 // Per-CPU state
+
+int proc_count[QUEUE_COUNT], time_slice[QUEUE_COUNT], queue_limit[QUEUE_COUNT];
+
+int updateQpos();
+
 struct cpu {
   uchar apicid;                // Local APIC ID
   struct context *scheduler;   // swtch() here to enter scheduler
@@ -52,10 +59,12 @@ struct proc {
   int ctime;                   // Creation time
   int etime;                   // End time
   int rtime;                   // Runtime
-  int enteredtime;             // When did it last start running?
+  int enteredtime, exit_time;  // When did it last start running?
   int ran;
   struct proc_stat *procstat;
   int priority;
+  int qno, qpos;
+  int localrtime;
 };
 
 // Process memory is laid out contiguously, low addresses first:
