@@ -30,7 +30,7 @@ int main(void)
 	exit();
 }
 ```
-FCFS takes 17.31
+FCFS takes 17.31 seconds
 
 PBS takes 18.14 seconds
 
