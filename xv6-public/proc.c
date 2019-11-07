@@ -259,11 +259,9 @@ fork(void)
   pid = np->pid;
 
   acquire(&ptable.lock);
-  cprintf("lock acquired in fork\n");
   np->state = RUNNABLE;
 
   release(&ptable.lock);
-  cprintf("lock acquired to main fork\n");
   return pid;
 }
 
@@ -324,7 +322,6 @@ wait(void)
   struct proc *curproc = myproc();
   
   acquire(&ptable.lock);
-  cprintf("acquired in wait\n");
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
