@@ -8,7 +8,7 @@
 #include "spinlock.h"
 #include <stddef.h>
 
-#define FCFS
+#define PS
 static unsigned long X = 1;
 
 int random_g(int M) {
@@ -130,7 +130,7 @@ found:
   if(p->pid <= 2)
 	  p->priority = 101;
   else
-	  p->priority = random_g(ticks);
+	  p->priority = random_g(ticks) % 101;
 
   return p;
 }
